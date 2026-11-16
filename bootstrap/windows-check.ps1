@@ -42,7 +42,7 @@ try {
     $envResult = Join-Path $fixtureRoot 'child-heartbeat.txt'
     $resultLiteral = ConvertTo-Json -InputObject $envResult -Compress
     [IO.File]::WriteAllText($envProbe, "if(process.argv[1]?.replaceAll('\\','/').endsWith('/@playwright/mcp/cli.js')) require('node:fs').writeFileSync($resultLiteral, String(process.env.PLAYWRIGHT_MCP_PING_TIMEOUT_MS));")
-    $env:NODE_OPTIONS = '--require="' + $envProbe + '"'
+    $env:NODE_OPTIONS = '--require="' + $envProbe.Replace('\', '/') + '"'
     $env:PLAYWRIGHT_MCP_PING_TIMEOUT_MS = '12345'
     $env:KIT_TEST_MARKER = $marker
     $env:DSH_HOME = $dshHome
