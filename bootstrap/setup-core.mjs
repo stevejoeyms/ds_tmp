@@ -19,10 +19,11 @@ export function clientPatch(text, yaml) {
   const docs = yaml.parseAllDocuments(text, { uniqueKeys: true });
   if (docs.length > 1 || docs.some(d => d.errors.length)) throw new Error('Profile YAML is invalid or has multiple documents. No changes made.');
   const doc = docs[0];
-  if (doc?.contents && (!yaml.isSeq(doc.contents) || doc.contents.flow)) throw new Error('Profile patch must be a block YAML sequence. Merge the example manually.');
+  if (doc?.contents && (!yaml.isSeq(doc.contents) || (doc.contents.flow && doc.contents.items.length))) throw new Error('Profile patch must be a block YAML sequence. Merge the example manually.');
   if (/^\s*\.\.\.\s*(?:#.*)?$/m.test(text)) throw new Error('Explicit YAML document endings require manual merge.');
   const checkNode = (node, config = false) => {
     if (!node) return;
+    if (yaml.isAlias(node)) throw new Error('Composition aliases require manual merge.');
     if (node.tag && !['str','seq','map','null','bool','int','float','timestamp','binary','merge'].some(tag => node.tag === 'tag:yaml.org,2002:' + tag)) throw new Error('Dynamic composition requires manual integration.');
     if (yaml.isSeq(node)) { for (const item of node.items) checkNode(item, config); return; }
     if (!yaml.isMap(node)) return;
@@ -58,6 +59,11 @@ export function clientPatch(text, yaml) {
     if (off || row.name !== '@deepseek-ai/dsh-mcp-client' || row.config?.serverName !== 'playwright' || row.config?.transport !== 'streamable-http' || row.config?.url !== endpoint)
       throw new Error('Existing playwright entry conflicts or is disabled/dynamic. It was not overwritten.');
     return text;
+  }
+  // Official rc.1 initial patch is comments + []. Remove only that empty root token.
+  if (doc?.contents?.flow && !doc.contents.items.length) {
+    const [start, end] = doc.contents.range;
+    text = text.slice(0, start) + text.slice(end);
   }
   const eol = text.includes('\r\n') ? '\r\n' : '\n';
   const addition = ['# DSH Offline Kit: official Client (DSH 0.2.2-rc.1).', '- insert:',

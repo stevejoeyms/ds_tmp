@@ -44,13 +44,18 @@ try {
     $env:DSH_CLIENT_VERSION = '0.2.2-rc.1'
     $env:DSH_NODE_EXE = (Get-Command node).Source
     $env:PLAYWRIGHT_MCP_EXTENSION_TOKEN = 'ci-placeholder-not-a-real-browser-token'
+    # Real official first-run patch template is comments + an empty flow sequence.
+    [IO.File]::WriteAllText($profileFile, "# first-run fixture`r`n[]`r`n")
+    & node (Join-Path $kit 'setup.mjs') setup --no-start
+    if ($LASTEXITCODE -ne 0) { throw 'Official empty patch initialization failed.' }
+    [IO.File]::WriteAllBytes($profileFile, $originalBytes)
     & node (Join-Path $kit 'setup.mjs') setup --no-start
     if ($LASTEXITCODE -ne 0) { throw 'Portable setup failed.' }
     & node (Join-Path $kit 'setup.mjs') launch --no-start
     if ($LASTEXITCODE -eq 0 -or (Test-Path -LiteralPath $marker)) { throw 'Harness was opened before MCP readiness.' }
     $patched = [IO.File]::ReadAllBytes($profileFile)
     if ([Convert]::ToBase64String($patched[0..($originalBytes.Length-1)]) -ne [Convert]::ToBase64String($originalBytes)) { throw 'Original YAML bytes changed.' }
-    $backup = Get-ChildItem -LiteralPath $profile -Filter 'cordis.patch.yml.bak-*' | Select-Object -First 1
+    $backup = Get-ChildItem -LiteralPath $profile -Filter 'cordis.patch.yml.bak-*' | Where-Object { [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName)) -eq [Convert]::ToBase64String($originalBytes) } | Select-Object -First 1
     if (-not $backup -or [Convert]::ToBase64String([IO.File]::ReadAllBytes($backup.FullName)) -ne [Convert]::ToBase64String($originalBytes)) { throw 'Original backup mismatch.' }
     $tracked = @($profileFile,$agents,(Join-Path $kit '.local\environment.json'),(Join-Path $kit 'ENVIRONMENT.md'))
     $hashes = @($tracked | ForEach-Object { (Get-FileHash -LiteralPath $_).Hash })

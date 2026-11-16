@@ -96,7 +96,7 @@ Token来自**当前Edge资料的官方扩展**，不是API Key或HTTP Header。�
 
 ```bat
 set "DSH_NODE_EXE=C:\实际DSH运行时\node.exe"
-tools.cmd setup --python "D:\我的harness\python-3.12.8-embed-amd64\python.exe" --harness-exe "D:\我的harness\DeepSeek Harness New\DeepSeek Harness.exe" --dsh-home "C:\实际DSHhome" --profile-dir "C:\实际活动profile"
+tools.cmd setup --python "D:\我的harness\python-3.12.8-embed-amd64\python.exe" --harness-exe "D:\我的harness\DeepSeek Harness New\DeepSeek Harness.exe" --dsh-home "C:\实际DSHhome" --profile-dir "C:\实际DSHhome\profiles\desktop"
 tools.cmd launch --harness-exe "D:\我的harness\DeepSeek Harness New\DeepSeek Harness.exe"
 ```
 

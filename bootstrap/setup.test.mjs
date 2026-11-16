@@ -21,7 +21,7 @@ test('YAML: preserves BOM, comments, CRLF and !!js bytes, and is idempotent', ()
   assert.equal(yaml.parseDocument(updated).toJS().length, 2);
 });
 test('YAML: rejects malformed/multi-document/flow roots before writing', () => {
-  for (const s of ['[bad', '- id: a\n---\n- id: b', '[]', '- id: a\n...\n'])
+  for (const s of ['[bad', '- id: a\n---\n- id: b', '[{}]', '- id: a\n...\n'])
     assert.throws(() => clientPatch(s, yaml));
 });
 test('YAML: existing correct Client does not duplicate', () => assert.equal(clientPatch(patch, yaml), patch));
@@ -130,4 +130,15 @@ test('Inherited Client and custom profile bundles cannot receive a duplicate ins
 test('Dynamic composition is not evaluated or silently given a second Client', () => {
   assert.throws(()=>clientPatch('- insert: !!js process.env.CLIENTS\n',yaml),/Dynamic composition/);
   assert.throws(()=>clientPatch('- insert:\n    - name: !!js process.env.CLIENT_NAME\n',yaml),/Dynamic composition/);
+});
+
+test('Official first-run comments plus empty flow patch [] can be initialized', () => {
+  const initial='\uFEFF# Edit this user patch\r\n[] # no overrides yet\r\n';
+  const result=clientPatch(initial,yaml);
+  assert.ok(result.startsWith('\uFEFF# Edit this user patch\r\n # no overrides yet\r\n'));
+  assert.equal(yaml.parseDocument(result).toJS().length,1);
+  assert.equal(clientPatch(result,yaml),result);
+});
+test('Dynamic composition cannot hide behind an alias from unrelated config', () => {
+  assert.throws(()=>clientPatch('- id: other\n  config:\n    saved: &dynamic !!js process.env.CLIENTS\n- insert: *dynamic\n',yaml),/Composition aliases/);
 });

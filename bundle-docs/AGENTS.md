@@ -9,3 +9,5 @@
 4. 参数以当前schema为准，业务动作以用户授权为准；不读出或上传Token、Cookie、企业数据。
 
 本文件仅提供本包的使用提示，不自动注册MCP、不修改权限，也不应覆盖其他工作区已有的指令文件。
+
+日常用户启动用本包`启动Harness.cmd`，先MCP后相邻Harness，不设登录自启。初始化后Python准确路径见本机`ENVIRONMENT.md`与`.local/environment.json`，通过`tools.cmd python`调用；不要使用PATH上的python/pip。完整说明见`一键启动说明.md`。

@@ -60,3 +60,13 @@
 ## 通用规则增补
 
 根据用户现场反馈提炼 STATE-AND-ASSERTIONS.md，仅保留可迁移规则，不记录站点URL、账号、业务字段、日期区间、数据总数或导出文件。校正同源定义（scheme/host/port）、组件提交与输入的区别、活动作用域、语义就绪、重置判据、内容级交叉验证和观测范围。依据见新增文档；未重新访问或执行企业页面用例。
+
+## 便携启动器所依据的官方rc.1源码
+
+固定标签[dsh-v0.2.2-rc.1](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.2-rc.1)：
+- [Desktop路径](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.2-rc.1/apps/desktop/src/paths.ts)：Desktop profile固定在DSH home/profiles/desktop。
+- [Home路径](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.2-rc.1/packages/util/home-paths/src/index.ts)：DSH_HOME覆盖默认用户home。
+- [Profile加载](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.2-rc.1/packages/boot/app-boot/src/profile.ts)：package.json的dsh.profile.bundles和随后cordis.patch.yml。
+- [Desktop profile初始化](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.2-rc.1/apps/desktop/src/project-manager.ts)：生成profile manifest，不把cordis.yml注释当作加载证据。
+
+启动器的Windows验证使用Runner临时profile与无害模拟Harness程序；不代表真实DSH上下文加载、Edge扩展Token或SSO已经在新机器验收。
