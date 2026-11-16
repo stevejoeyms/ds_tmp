@@ -17,7 +17,7 @@
 
 1. 让 Harness **先读 MODEL-INSTRUCTIONS.md**。这是一页左右的主规则；无需每轮重塞整套文档。
 2. 不会填写工具参数时，只查 TOOL-RECIPES.md 的对应条目；机器可读例子在 examples.json。
-3. 出错查 PITFALLS.md；出现版本差异以当前会话真实工具 schema 为准，静态手册不能覆盖运行时能力。
+3. 关于输入生效、作用域、就绪和业务判定，读 STATE-AND-ASSERTIONS.md；出错查 PITFALLS.md；出现版本差异以当前会话真实工具 schema 为准，静态手册不能覆盖运行时能力。
 4. tool-catalog-0.0.85.json 是从真实 MCP tools/list 导出的 **25 个默认工具**，含完整参数 schema，供定点查阅，不要一次整份塞给较弱模型。
 5. SOURCES.md 记录固定版本、官方依据及验证边界。范例参数校验通过不等于目标页面动作已经验证。
 
