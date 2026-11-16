@@ -12,11 +12,27 @@ try {
     # Parse the target launcher with Windows PowerShell 5.1 as well as pwsh.
     & powershell.exe -NoProfile -Command '$e=$null; [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path (Get-Location) "start-mcp.ps1"),[ref]$null,[ref]$e); if($e.Count){$e | Out-String | Write-Error; exit 1}'
     if ($LASTEXITCODE -ne 0) { throw 'Windows PowerShell syntax check failed' }
+    # Exercise the actual detached launcher, CMD bootstrap, protocol readiness and owned-child stop.
+    $env:DSH_NODE_EXE = (Get-Command node).Source
+    $env:PLAYWRIGHT_MCP_EXTENSION_TOKEN = 'ci-placeholder-not-a-real-browser-token'
+    try {
+        & cmd.exe /d /c mcp.cmd start
+        if ($LASTEXITCODE -ne 0) { throw 'Background start failed' }
+        & cmd.exe /d /c mcp.cmd start
+        if ($LASTEXITCODE -ne 0) { throw 'Idempotent start failed' }
+        & cmd.exe /d /c mcp.cmd status
+        if ($LASTEXITCODE -ne 0) { throw 'Background MCP status failed' }
+    } finally {
+        & cmd.exe /d /c mcp.cmd stop
+        if ($LASTEXITCODE -ne 0) { throw 'Background stop failed' }
+        Remove-Item Env:PLAYWRIGHT_MCP_EXTENSION_TOKEN -ErrorAction SilentlyContinue
+        Remove-Item Env:DSH_NODE_EXE -ErrorAction SilentlyContinue
+    }
     $dist = Join-Path (Split-Path $PSScriptRoot -Parent) 'dist'
     if (Test-Path -LiteralPath $dist) { throw 'dist already exists. Move it aside before rebuilding.' }
     $stage = Join-Path $dist 'playwright-mcp-offline-win-x64'
     New-Item -ItemType Directory -Path $stage -Force | Out-Null
-    foreach ($name in @('node_modules','package.json','package-lock.json','start-mcp.ps1','README.md','dsh-client.example.yml')) {
+    foreach ($name in @('node_modules','package.json','package-lock.json','start-mcp.ps1','mcp.cmd','background.mjs','README.md','dsh-client.example.yml')) {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $stage -Recurse
     }
     $zip = Join-Path $dist 'playwright-mcp-offline-win-x64.zip'
