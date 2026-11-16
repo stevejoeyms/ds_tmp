@@ -116,3 +116,11 @@ tools.cmd launch --harness-exe "D:\我的harness\DeepSeek Harness New\DeepSeek H
 ## 配置支持边界
 
 自动接入限定官方DSH 0.2.2-rc.1标准Desktop manifest（package.json中按顺序选择dsh-base、dsh-web-app）。需先正常打开一次Harness生成profile，再完全退出。Desktop固定使用DSH_HOME/profiles/desktop，不能用任意profile替换；显式--dsh-home会传给本次启动的Harness，不修改系统环境变量。自定义bundle、影响注册的动态配置或继承层已有Playwright Client会停止自动合并，保留现状交由人工确认。仅注释提及cordis.patch.yml不视为配置确认。官方安装包内标准bundle以固定版本官方源码为基线；手改过应用内bundle的部署需人工接入，不能当作标准安装。
+
+## 本版兼容修复：首次成功后 Session not found
+
+启动器仅给本包新启动的MCP子进程固定设置 `PLAYWRIGHT_MCP_PING_TIMEOUT_MS=0`，关闭当前DSH HTTP Client不能稳定应答的MCP服务端心跳。保留 `--background`、Token校验与原生Client复用；不设置用户/系统环境变量。关闭心跳也意味着不再用这套ping主动发现死连接。
+
+升级时先正常完全退出DSH，在旧包目录执行 `tools.cmd mcp stop` 并确认成功，再解压新版、双击 `启动Harness.cmd`。不要覆盖仍在运行的目录。若8931被其他实例占用，先在原入口停止，不盲杀进程。启动器复用已有服务时不会改变其环境变量。
+
+验收：同一原生Client先读目标标签页和快照，20秒、65秒后再次读取，核对URL/页面数并执行获准的只读交互。工具枚举成功不足以证明连接稳定。仍出现404时记录服务是否被重启及准确错误，不循环重试、不自动重放写操作。此时由Client重新初始化；本版若未恢复，保持Server运行并正常退出/重开DSH。

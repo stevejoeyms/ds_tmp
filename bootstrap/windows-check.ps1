@@ -32,11 +32,18 @@ $csharp = Join-Path $fixtureRoot 'HarnessFixture.cs'
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 & $csc /nologo "/out:$exe" $csharp
 if ($LASTEXITCODE -ne 0) { throw 'Cannot build the harmless Harness startup fixture.' }
-$names = @('DSH_HOME','DSH_PROFILE_DIR','DSH_PROFILE','DSH_CLIENT_VERSION','DSH_NODE_EXE','PLAYWRIGHT_MCP_EXTENSION_TOKEN','KIT_TEST_MARKER')
+$names = @('DSH_HOME','DSH_PROFILE_DIR','DSH_PROFILE','DSH_CLIENT_VERSION','DSH_NODE_EXE','PLAYWRIGHT_MCP_EXTENSION_TOKEN','KIT_TEST_MARKER','NODE_OPTIONS','PLAYWRIGHT_MCP_PING_TIMEOUT_MS')
 $saved = @{}
 foreach ($name in $names) { $saved[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 $started = $false
 try {
+    # Observe the actual official CLI child's environment, without modifying its code.
+    $envProbe = Join-Path $fixtureRoot 'observe-child.cjs'
+    $envResult = Join-Path $fixtureRoot 'child-heartbeat.txt'
+    $resultLiteral = ConvertTo-Json -InputObject $envResult -Compress
+    [IO.File]::WriteAllText($envProbe, "if(process.argv[1]?.replaceAll('\\','/').endsWith('/@playwright/mcp/cli.js')) require('node:fs').writeFileSync($resultLiteral, String(process.env.PLAYWRIGHT_MCP_PING_TIMEOUT_MS));")
+    $env:NODE_OPTIONS = '--require="' + $envProbe + '"'
+    $env:PLAYWRIGHT_MCP_PING_TIMEOUT_MS = '12345'
     $env:KIT_TEST_MARKER = $marker
     $env:DSH_HOME = $dshHome
     $env:DSH_PROFILE_DIR = $profile
@@ -85,6 +92,8 @@ try {
         & cmd.exe /d /c 'tools.cmd mcp start'
         if ($LASTEXITCODE -ne 0) { throw 'Background start via unified entry failed.' }
         $started = $true
+        if (-not (Test-Path $envResult) -or [IO.File]::ReadAllText($envResult) -ne '0') { throw 'Official MCP child did not receive the local heartbeat compatibility setting.' }
+        if ($env:PLAYWRIGHT_MCP_PING_TIMEOUT_MS -ne '12345') { throw 'Parent environment was modified.' }
         $reuse = & node (Join-Path $kit 'setup.mjs') setup
         if ($LASTEXITCODE -ne 0 -or ($reuse -join "`n") -notmatch 'Existing MCP reused') { throw 'Setup failed to reuse the already running MCP.' }
         & node (Join-Path $kit 'setup.mjs') launch --no-start

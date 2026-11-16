@@ -113,7 +113,8 @@ async function serve() {
     child = spawn(process.execPath, [path.join(root, 'node_modules', '@playwright', 'mcp', 'cli.js'),
     '--extension', '--browser=msedge', '--background', '--port=8931', '--host=127.0.0.1'],
     { cwd: root, windowsHide: true, stdio: ['ignore', log, log],
-      env: { ...process.env, DEBUG: '', PWDEBUG: '' } });
+      // DSH rc.1 compatibility: its HTTP client can miss server pings. Scope to this MCP child.
+      env: { ...process.env, PLAYWRIGHT_MCP_PING_TIMEOUT_MS: '0', DEBUG: '', PWDEBUG: '' } });
   } catch (error) { clean(); throw error; }
   finally { if (log !== undefined) fs.closeSync(log); }
   child.once('error', () => { clean(); process.exitCode = 1; });

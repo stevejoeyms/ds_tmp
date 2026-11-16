@@ -17,3 +17,9 @@ Windows使用Runner已安装Python3.12及临时profile、无害模拟Harness程�
 Token可用形态与浏览器认证是两件事；启动器不宣称能从tools/list识别Token过期。包内最佳实践包含持久Client/标签复用规则，禁止每步新建一次性MCP浏览器客户端。
 
 模型发现验证：初始化写入DSH home的AGENTS标记块后，正常退出旧Harness，再用启动脚本打开。新会话要求模型说出实际Python入口、执行一次真实Python命令，再用原生browser_tabs/browser_snapshot连续读同一页面并确认页面数没有无意增长。配置写入/端口通/程序启动请求均不等于这项验收通过。
+
+## 心跳兼容修复（2026-11-16）
+
+用户提供的目标机实测：保留background，仅将MCP子进程环境 `PLAYWRIGHT_MCP_PING_TIMEOUT_MS=0` 后，原生连接在20秒、65秒仍有效，并完成公开页面搜索。此为用户现场报告，本发布者未独立接入目标机复测；不扩展为企业业务测试通过。设置0后心跳没有运行，不能称“通过20多个心跳周期”。
+
+源码核验：锁定依赖playwright-core的coreBundle.js中pingTimeout直接读取process.env该变量，非CLI配置合并链；timeout<=0跳过心跳，否则ping失败会server.close。此修复是当前DSH组合的局部兼容策略，不修改官方依赖，不宣称修复了所有404原因。

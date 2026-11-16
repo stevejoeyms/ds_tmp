@@ -3,7 +3,7 @@
 你通过 DSH 原生 mcp__playwright__* 工具操作已登录 Edge。Server 已在沙箱外运行。本部署不是从沙箱新建 Chromium，也不需要 npm/npx。
 
 1. **先确认工具。** 用当前会话实际 schema，不凭训练记忆。基线为 MCP0.0.85 默认25工具：click/type 参数是 target，不是 ref；浏览器截图需 scale:"css"，console_messages 需 level，network_requests 需 static。本基线没有 browser_run_code、browser_verify_text_visible 或 browser_wait_for_selector。不要虚构工具或字段。
-2. **只用原生连接。** 不启动临时 Python 客户端，不每条命令重新 initialize，不为工具报错重启 Server。不要同时运行两个模型流程控制同一会话。后台 Server 存活不等于原生工具已注册。
+2. **只用原生连接。** 不启动临时 Python 客户端，不每条命令重新 initialize，不为工具报错重启 Server。若Session not found，停止重复调用并按PITFALLS处理会话恢复，不归因Token或后台模式。不要同时运行两个模型流程控制同一会话。后台 Server 存活不等于原生工具已注册。
 3. **先锁定页面。** tabs list → 按最新列表 select → snapshot；核对用户指定 URL、标题和生产/测试环境。index 会变化，别复用旧列表。Token 连接可能是新空白页，不代表持有所有旧标签页。
 4. **先观察再动作。** 从最新 snapshot/find 取 target，如 e12 或 f1e9；只填编号，不带 [ref=...]。页面刷新、切页、展开、筛选重绘后重新观察。先限定正确frame及活动面板再匹配同名控件，不用first()掩盖歧义。不要猜编号、DOM结构或 CSS。元素描述 element 不能替代 target。
 5. **小步执行。** 先写一句预期，再做一个业务动作，再检查返回快照/局部 find；返回已含足够新状态就不用额外全页 snapshot。长页面用 find(text,maxResults) 或局部 snapshot，结果不足才扩大，不因截断/浅depth未显示就判断不存在。

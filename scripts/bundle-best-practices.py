@@ -42,6 +42,7 @@ for name in ['enable-autostart.cmd', 'disable-autostart.cmd']:
     files.pop(name, None)
 guide = (r / 'Playwright-MCP-快速开始.md').read_bytes()
 files['Harness配置说明.md'] = guide
+files['server/background.mjs'] = (r / 'offline-mcp/background.mjs').read_bytes()
 files['server/README.md'] = (r / 'offline-mcp/README.md').read_bytes()
 intro = '''# Edge + DSH 统一包：最佳实践 MVP
 
@@ -65,7 +66,7 @@ intro = '''# Edge + DSH 统一包：最佳实践 MVP
 统一入口：tools.cmd python / doctor / mcp status；首次缺Token由启动脚本引导本地填写，连接问题可运行重新配置Token.cmd。
 扩展放在extension/，Server及完整依赖放在server/。不需npm或独立Node。
 
-新增便携初始化/启动入口，保留上一版server核心、扩展与全部依赖；不包含Python发行版或wheel仓库。
+新增便携初始化/启动入口，仅更新Server子进程的DSH心跳兼容设置；保留官方CLI、扩展与全部依赖；不包含Python发行版或wheel仓库。
 
 ---
 
@@ -79,9 +80,9 @@ source['practices_validation'] = '25 actual tools, 18 positive schema examples, 
 files['SOURCE.json'] = (json.dumps(source, ensure_ascii=False, indent=2) + '\n').encode()
 files['SHA256SUMS'] = ''.join(hashlib.sha256(v).hexdigest() + '  ' + k + '\n'
                                 for k, v in sorted(files.items()) if k != 'SHA256SUMS').encode()
-# All pre-existing runtime code, dependencies and extension files remain byte-for-byte unchanged.
+# Only the launcher compatibility environment changes; official dependencies/extension remain unchanged.
 changed = {k for k, v in original.items() if files.get(k) != v}
-allowed = {'README.md', 'Harness配置说明.md', 'server/README.md', 'SOURCE.json', 'SHA256SUMS', 'enable-autostart.cmd', 'disable-autostart.cmd'}
+allowed = {'server/background.mjs', 'README.md', 'Harness配置说明.md', 'server/README.md', 'SOURCE.json', 'SHA256SUMS', 'enable-autostart.cmd', 'disable-autostart.cmd'}
 if changed - allowed:
     raise SystemExit('Unexpected runtime mutation: ' + repr(changed - allowed))
 a.output_dir.mkdir(parents=True, exist_ok=True)

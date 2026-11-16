@@ -2,6 +2,8 @@
 
 | 现象/误区 | 当前版本应对 |
 |---|---|
+| 首次浏览器调用成功，随后Session not found | 本包新启动的Server已局部关闭MCP心跳；先确认没有复用升级前旧实例、没有Server重启。404代表会话无效，需Client重新初始化，不改Token/后台参数，不循环重试或重放业务写入 |
+| 后台标签页hidden就断定fill不能用 | document.visibilityState与元素可见性不同；先查当前tab/frame、定位歧义、CSS/尺寸、可编辑状态和原始错误。优先原生工具，必要时激活页面验证；不默认JS赋值绕过UI交互 |
 | Tool参数报Unknown ref | 本版字段是target；把快照[ref=e12]里的e12作为target，不传整个方括号文本 |
 | browser_run_code不存在 | 默认名字是browser_run_code_unsafe；不自动替换后运行大段代码，先审阅必要性 |
 | verify_text_visible工具不存在 | 默认25工具没有testing能力，先用可见快照和业务预期判断；不能虚构断言工具 |
