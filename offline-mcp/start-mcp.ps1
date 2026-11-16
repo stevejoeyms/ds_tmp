@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [string]$NodePath,
+    [ValidateSet('msedge','chrome')][string]$Browser = 'msedge',
     [ValidateRange(1024,65535)][int]$Port = 8931
 )
 $ErrorActionPreference = 'Stop'
@@ -37,10 +38,10 @@ $help = & $node $cli --help 2>&1 | Out-String
 if ($LASTEXITCODE -ne 0 -or $help -notmatch '--extension' -or $help -notmatch '--port') { throw 'MCP CLI check failed.' }
 Write-Host "Node $($chosen.Version): $node"
 Write-Host "MCP: http://127.0.0.1:$Port/mcp"
-Write-Host 'Keep this window open. Approve the Playwright Extension connection in Chrome when prompted.'
+Write-Host "Browser: $Browser. Keep this window open and approve the Playwright Extension connection."
 Write-Host 'Press Ctrl+C to stop. This script does not change execution policy or sandbox settings.'
 Push-Location -LiteralPath $PSScriptRoot
 try {
-    & $node $cli --extension --browser=chrome --port=$Port --host=127.0.0.1
+    & $node $cli --extension --browser=$Browser --port=$Port --host=127.0.0.1
     if ($LASTEXITCODE -ne 0) { throw "MCP exited with code $LASTEXITCODE" }
 } finally { Pop-Location }

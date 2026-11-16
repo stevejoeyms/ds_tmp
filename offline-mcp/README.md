@@ -1,130 +1,108 @@
-# Playwright MCP：Windows 离线最小安装
+# Edge + DeepSeek Harness 使用说明
 
-目标：DSH 用自然语言调用 Playwright，控制 Chrome 现有登录会话。
+更新：2026-11-16。目标是控制 **Edge 中已经登录的页面**。无需 npm、npx、Python 或独立 Node；只用官方 Extension 和 Server。
 
-组合只有三件：**DSH 已有 MCP Manager/Client → 官方 Playwright MCP → 官方 Playwright Extension**。
-本包固定 `@playwright/mcp@0.0.85`，包含完整生产 `node_modules`。不含 Node、npm、浏览器二进制或浏览器登录数据。目标电脑不需安装任何 npm 包。
+## 第一步：确认扩展装在 Edge
 
-## 1. 下载并解压
+在 Edge 打开 `edge://extensions/`，确认 **Playwright Extension** 已启用。原来的扩展 ZIP 可以继续使用，无需重打包。如果尚未安装，下载 [扩展 ZIP](https://raw.githubusercontent.com/stevejoeyms/ds_tmp/main/playwright-extension-0.5.0.zip)，解压后在该页面开启开发者模式，选择「加载解压缩的扩展」并选中含 `manifest.json` 的文件夹。
 
-从本仓库 Releases 下载 `playwright-mcp-offline-win-x64.zip` 和同名 `.sha256`，不要下载 GitHub 的 Source code ZIP。后者不含依赖。
+在装扩展的同一个 Edge 用户资料中打开目标网站，自行登录，保持窗口打开。官方商店来源：[Microsoft Playwright Extension](https://chromewebstore.google.com/detail/mmlmfjhmonkocbjadbfplnigmagldckm)；企业策略禁止安装时交给 IT，不绕过。
 
-可先在普通 PowerShell 核对 SHA256（与 `.sha256` 中的值相同）：
+## 第二步：启动 Edge 版 Server
 
-```powershell
-Get-FileHash "$env:USERPROFILE\Downloads\playwright-mcp-offline-win-x64.zip" -Algorithm SHA256
-```
+从 [本仓库 Releases](https://github.com/stevejoeyms/ds_tmp/releases) 下载最新 **Playwright MCP Windows x64 offline** 发布中的 `playwright-mcp-offline-win-x64.zip`，不要选 Source code。
 
-解压到自己的工作目录（路径有空格也支持）。以下以解压后文件夹为例：
+旧版 ZIP 的脚本固定 Chrome。请换本次 Edge 版；扩展及 npm 依赖版本不变。
 
-```powershell
-Set-Location 'C:\path\to\playwright-mcp-offline-win-x64'
-```
-
-## 2. Chrome 装官方扩展，启动服务
-
-优先安装 [Microsoft 官方 Playwright Extension](https://chromewebstore.google.com/detail/mmlmfjhmonkocbjadbfplnigmagldckm)。商店不可访问时，可用本仓库先前导出的 [扩展 0.5.0 ZIP](https://raw.githubusercontent.com/stevejoeyms/ds_tmp/main/playwright-extension-0.5.0.zip)：解压，打开 `chrome://extensions/`，开启开发者模式，加载已解压文件夹。若企业策略禁止安装，交由 IT 批准，不改策略。
-
-保持 Chrome 正常运行，用户自行登录目标页面。在 **DSH 沙箱外的普通 PowerShell** 中运行：
+解压后，在文件资源管理器进入含 `start-mcp.ps1` 的文件夹，地址栏输入 `powershell` 并回车。在打开的**普通 PowerShell** 中运行：
 
 ```powershell
-.\start-mcp.ps1
+.\start-mcp.ps1 -Browser msedge
 ```
 
-脚本在 `%USERPROFILE%\.dsh\dsh-runtimes\` 下自动查找现有 Node 24 x64，只读使用，不修改 DSH 运行时。不需要管理员权限。
+脚本自动查找 DSH 自带 Node 24 x64。看见 `Listening on http://127.0.0.1:8931` 后，保持窗口打开。要停止时在此窗口按 Ctrl+C。
 
-若找不到，指定 DSH 实际自带的 `node.exe`，不要另行安装：
+如果脚本执行被策略拦截，不改 ExecutionPolicy。让 Harness 找出原有 DSH `node.exe` 的准确路径，然后由你在普通 PowerShell 执行以下官方命令（替换 node 路径）：
 
 ```powershell
-.\start-mcp.ps1 -NodePath 'C:\actual\dsh-runtime\node.exe'
+& 'C:\实际路径\node.exe' '.\node_modules\@playwright\mcp\cli.js' --extension --browser=msedge --port=8931 --host=127.0.0.1
 ```
 
-它实际运行：
+**关键是 `--extension --browser=msedge`。** 不用 Chrome，不下载 Chromium，不启动隔离浏览器。HTTP 地址不能在浏览器打开来证明连接成功，需 DSH 完成 MCP 握手与工具发现。
+
+## 第三步：把这段完整发给 Harness，只配置一次
 
 ```text
-<DSH node.exe> node_modules/@playwright/mcp/cli.js --extension --browser=chrome --port=8931 --host=127.0.0.1
+我要通过 Microsoft Playwright MCP 控制现有 Edge 登录会话。
+Server 已由我在沙箱外启动，地址 http://127.0.0.1:8931/mcp，模式 --extension --browser=msedge。
+
+请先做配置和工具发现，不要开始操作业务页面：
+1. 核实当前 DSH 版本和实际活动 profile，读取其已有配置，找出 @deepseek-ai/dsh-mcp-manager 的实际条目 ID。官方 Web/Desktop 默认 ID 是 mcp-manager，不要照抄示例的 mcp，也不要假设存在通用 mcpServers.json。
+2. 已有 Manager 时，保留已有服务器，在 config.servers 中合并 playwright 条目：transport=streamable-http，url=http://127.0.0.1:8931/mcp，enabled=true。优先使用本机确实存在的设置接口；没有 MCP 表单就处理实际 profile 的 cordis.patch.yml。
+3. 修改前备份，只改必要字段，不覆盖完整配置。没有 Manager 但已有官方 dsh-mcp-client 时，按官方 insert patch 接入；不要 npm/npx 安装，不要重复注册同名服务。
+4. 如果 workspace-write 禁止写活动配置，不扩大权限，也不要反复重试。只输出我应修改的准确文件路径、必要片段和手动步骤。
+5. 配置生效后核实真实工具列表里有 mcp__playwright__browser_tabs、mcp__playwright__browser_snapshot、mcp__playwright__browser_click。仅端口可连不算完成。需要重启 DSH 或新建会话时明确告诉我。
+6. 若工具不可见，报告实际连接错误与缺失环节；不要假装已注册，不要改用 requests、Python 抓取或在沙箱中启动 Chromium。
 ```
 
-保留 PowerShell 窗口。后续首次调用浏览器工具时，按 Chrome 扩展界面批准连接/选择标签页。停止服务：在此窗口按 **Ctrl+C**。不关闭浏览器，不注销登录。
+**手动填写时只需这四项：**
 
-如果 PowerShell 被企业执行策略拦截，不用 Bypass、不更改策略；按公司批准的流程执行脚本，或在同一目录直接运行官方 CLI：
-
-```powershell
-& 'C:\actual\dsh-runtime\node.exe' '.\node_modules\@playwright\mcp\cli.js' --extension --browser=chrome --port=8931 --host=127.0.0.1
-```
-
-## 3. 注册到 DSH：优先使用已有 MCP Manager
-
-按当前 [DeepSeek 官方 MCP Manager 文档](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/packages/mcp/mcp-manager/README.md)，Web/Desktop profile 已包含 Manager；Settings 负责编辑 servers。目标机器的具体版本尚未提供，以本机实际界面及字段为准。
-
-在 DSH Settings 找到已有的 **MCP Manager**（包名 `@deepseek-ai/dsh-mcp-manager`），在其 `servers` 表新增一个名为 `playwright` 的条目，只填以下字段，保留所有其他条目：
-
-```json
-{
-  "transport": "streamable-http",
-  "url": "http://127.0.0.1:8931/mcp",
-  "enabled": true
-}
-```
-
-等价配置结构是 `config.servers.playwright = 上述对象`，不是通用的 `mcpServers` JSON。保存后 Manager 会连接、初始化和枚举工具；若有 Probe，可先运行它检查工具发现，但 Probe 通过不代表浏览器已被接管。
-
-不要直接用一个只含 playwright 的 `cordis.patch.yml` 覆盖现有配置：官方说明 patch 会替换完整 servers 表。通过 Settings 做局部新增最简单。
-
-**只有本机没有 Manager，但已有 `@deepseek-ai/dsh-mcp-client` 时**，才把本包 `dsh-client.example.yml` 中的一行合入当前 profile composition。不要整文件覆盖；不要再装一个 Client，不要同时用两种注册方式重复注册 playwright。
-
-如果本机两者都没有，或 Settings 没有这些字段，需要提供 DSH 版本并按对应版本的官方安装方式处理；本包不会修改或升级 Harness。
-
-## 4. 最终验收：从自然语言开始
-
-向 DSH 发送：
-
-> 使用 Playwright 列出 Chrome 已打开的标签页，接管我选定的页面，读取页面快照，并告诉我页面标题和一个可交互控件。先不要点击、提交或修改业务数据。
-
-应实际看到 DSH 调用 `mcp__playwright__browser_tabs` 和 `mcp__playwright__browser_snapshot` 并返回当前页面内容，而非口头描述。
-
-随后在你允许的无副作用控件上验证点击，例如：
-
-> 点击页面里只展开帮助说明的按钮，再读取快照，确认帮助内容出现。不要新增、删除、保存、提交或更改业务数据。
-
-应看到 `mcp__playwright__browser_click` 的实际调用与点击后的快照。若页面没有此类控件，选你批准的等价只读操作。**工具被枚举、端口开放、点击执行成功，都不等于业务功能通过。**
-
-最小权限做法：Server 在普通用户的 PowerShell 运行，只监听 `127.0.0.1`；DSH 通过已有 MCP 连接；浏览器权限通过官方扩展显式确认。不需要把整个 Harness 改成完全访问模式。
-
-## 常见阻塞
-
-| 现象 | 处理 |
+| 字段 | 值 |
 |---|---|
-| 找不到 Node | 指定现有 DSH Node 的完整路径；脚本要求 Windows x64 Node 24 |
-| 8931 已占用 | 停止自己先前启动的服务；或 `-Port 8932` 并同步修改 DSH URL |
-| DSH 没有 Playwright 工具 | 检查 Manager 连接状态、transport 和 `/mcp` URL；避免重复 serverName |
-| 有工具但无法接管 | 确认扩展已启用，Chrome 已运行，并在扩展界面批准本次连接 |
-| 沙箱无法访问 127.0.0.1 | 属于 Harness 网络权限阻塞；由其官方支持或 IT 配置允许的本地 MCP 通路，不切换 danger-full-access |
-| 企业策略阻止扩展或脚本 | 请 IT 按公司流程批准，不绕过策略 |
+| 服务名 / servers 的键 | `playwright` |
+| 传输 | `streamable-http` |
+| URL | `http://127.0.0.1:8931/mcp` |
+| 启用 | `true` |
 
-## 构建与验证边界
+Header、Token、command、args 在本次 HTTP 注册中不填。不同 DSH 版本的界面可能不同；别为了找菜单而新装 Client。
 
-官方来源：[Microsoft Playwright MCP](https://github.com/microsoft/playwright-mcp)、[官方浏览器连接说明](https://github.com/microsoft/playwright.dev/blob/main/mcp/configuration/browser-extension.mdx)、[DeepSeek MCP Client](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/packages/mcp/mcp-client/README.md)。
+若必须手动编辑：下面是**当前官方默认 Manager ID** 的 patch 结构，需合入实际活动 profile；如果 ID 不同，改成查到的值。如果已有其他 servers，必须保留原有全部条目。不要把这段覆盖整个文件。
 
-GitHub Actions 使用 `windows-latest`、Node 24 x64、`npm ci --omit=dev --ignore-scripts`、`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`；依赖版本及 npm 官方下载 URL/完整性值均在 `package-lock.json` 锁定。微软包源码和许可证保留在 node_modules 中。
-
-构建检查：实际在 Windows 解压后调用 `node .../cli.js --help`，启动 HTTP 服务，再做 MCP initialize / initialized / tools/list，确认 browser_snapshot、browser_click 等工具被发布。**不在 CI 连接用户 Chrome 或运行 Harness。**真实目标电脑的扩展批准、Harness 调用和登录页面操作，在用户实机完成前均为 **NOT TESTED**。
-
-没有 GitHub Actions 时，在另一台有 npm 的 Windows x64 / Node 24 电脑上，取得仓库文件后运行 `offline-mcp\build.ps1`；ZIP 输出到 `dist`。目标电脑仍然不使用 npm。
-
-在 GitHub 仓库的 **Actions → Build Windows offline MCP → Run workflow** 可重新构建。成功后在该次 Run 的 **Artifacts** 下载；也会在 **Releases** 中发布可直接下载的 ZIP 和 SHA256。Artifact 的外层 ZIP 里才是离线 ZIP，需再解压一次。
-
-## ZIP 结构
-
-```text
-playwright-mcp-offline-win-x64/
-  node_modules/                 # 官方包和全部生产依赖
-    @playwright/mcp/
-    playwright/
-    playwright-core/
-  package.json
-  package-lock.json
-  start-mcp.ps1
-  dsh-client.example.yml
-  README.md
+```yaml
+- id: mcp-manager
+  config:
+    servers:
+      playwright:
+        transport: streamable-http
+        url: http://127.0.0.1:8931/mcp
+        enabled: true
 ```
+
+CLI profile 的 patch 通常在 `$DSH_HOME/profiles/<name>/cordis.patch.yml`；Desktop 可使用应用自有 profile 目录，以本机实际值为准。配置重载后仍没工具，就正常重启 DSH 并新建会话；Server 窗口继续保持打开。
+
+## 第四步：让 Harness 真正接管 Edge
+
+把下面这段发给 Harness：
+
+> 请实际调用 mcp__playwright__browser_tabs 列出 Edge 标签页，等我确认目标标签页。然后选择该标签页，调用 mcp__playwright__browser_snapshot，告诉我页面标题和一个可点击控件。先不要点击或提交，不要新增、删除、保存任何业务数据。不要只写计划，需给出真实工具调用结果。
+
+首次浏览器工具调用可能打开 Playwright 连接确认页。在 **Edge** 中按界面批准连接/选择允许控制的标签页。扩展已启用并不代表本次连接已批准。批准后若第一次调用超时，让 Harness 再试一次。
+
+能返回你当前登录页面的标题和控件后，再发自然语言任务，例如：
+
+> 在刚才的页面打开帮助说明，读取说明内容后告诉我。只操作这个只读帮助控件，不更改业务数据。
+
+看到真实 `browser_click` 和随后快照，才确认模型确实能控制页面。
+
+## 卡住时只看这一表
+
+| 现象 | 下一步 |
+|---|---|
+| 参数 Browser 不存在 | 你还在运行旧脚本，下载 Edge 版；或用上面的官方 CLI 命令 |
+| 报 Chrome 扩展不存在 / 打开 Chrome | 启动参数仍是 chrome，Ctrl+C 停旧服务后用 msedge 重启 |
+| 8931 已占用 | 不要再开第二个 Server；先确认旧服务是否 Chrome，再在其原窗口 Ctrl+C 停止 |
+| 有 Server，Harness 没 Playwright 工具 | 注册尚未生效，核对活动 profile、Manager ID、HTTP URL 和日志 |
+| 有工具但 Extension not connected / 超时 | 看 Edge 连接确认页、扩展启用状态，以及扩展所在用户资料 |
+| 报 Extension not found in 某个 Profile | 扩展装在另一个 Edge 用户资料；在已装扩展的资料中打开目标页面，按官方 --profile-dir-name 选择必要的资料 |
+| 无法访问 127.0.0.1 或无法写配置 | 属于权限边界，手动注册或交 IT 按批准方式处理，不切换 danger-full-access |
+
+日常使用只需：**Edge 登录 → 启动 Server → 打开 DSH 发任务**。注册只做一次；新连接仍可能需要扩展确认。
+
+当前实际验证范围：GitHub Windows 构建会检查解压后 CLI、Extension 模式 HTTP 启动及 MCP 工具发现；你的目标电脑上的 DSH / Edge 授权和页面操作尚未实测，不能提前判定成功。
+
+## 官方依据
+
+- [微软浏览器连接与 Extension](https://github.com/microsoft/playwright.dev/blob/main/mcp/configuration/browser-extension.mdx)
+- [DSH MCP Manager](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/packages/mcp/mcp-manager/README.zh.md)
+- [官方默认 Manager ID](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/packages/bundle/web-app/cordis.patch.yml#L153)
+- [DSH 官方 MCP patch 与 profile 路径示例](https://github.com/deepseek-ai/deepseek-harness/blob/39163dd30f703a79079e2d2446545cff3c453738/docs/user/guide/mcp-memory.zh.md)

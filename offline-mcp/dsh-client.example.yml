@@ -1,8 +1,9 @@
-# Only if this DSH profile already supports dsh-mcp-client and has no MCP Manager.
-# Merge this row into the active composition; do not overwrite the whole profile.
-- id: mcp-playwright
-  name: '@deepseek-ai/dsh-mcp-client'
-  config:
-    serverName: playwright
-    transport: streamable-http
-    url: http://127.0.0.1:8931/mcp
+# Only if the active profile has no MCP Manager but already includes this Client package.
+# This is a Cordis PATCH, not a complete composition. Merge; never overwrite the profile.
+- insert:
+    - id: mcp-playwright
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: playwright
+        transport: streamable-http
+        url: http://127.0.0.1:8931/mcp
