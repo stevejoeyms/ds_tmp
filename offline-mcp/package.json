@@ -1,0 +1,9 @@
+{
+  "name": "playwright-mcp-offline-win-x64",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline runtime for official Playwright MCP",
+  "dependencies": {
+    "@playwright/mcp": "0.0.85"
+  }
+}
