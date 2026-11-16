@@ -1,3 +1,5 @@
+> 最佳实践入口：统一包根目录 best-practices/README.md。首次任务让模型先读 best-practices/MODEL-INSTRUCTIONS.md。
+
 # Edge + DSH：后台启动与 Token 自动连接
 
 本次更新保留已跑通的 Microsoft Playwright MCP 0.0.85 和 Extension 0.5.0，不换浏览器，不走 CDP。统一包中同时有 extension 和 server。
@@ -51,50 +53,25 @@ status 会实际执行 MCP 初始化和工具发现，不能用 TCP 或浏览器
 
 运行日志与管理状态在 `%LOCALAPPDATA%\PlaywrightMCP\`。Token 不会由启动器打印到终端或写进命令行。日志可能包含本机运行错误，不要整目录上传。
 
-## DSH 注册仍只做一次
+## DSH 0.2.2-rc.1 原生注册（已注册成功就跳过）
 
-服务名 `playwright`；transport `streamable-http`；URL `http://127.0.0.1:8931/mcp`；enabled `true`。**扩展 Token 注入的是 Server 环境，DSH 的 HTTP headers 不需要填写这个 Token。**
+此版本没有 MCP Manager，已有官方 dsh-mcp-client。不要找 Manager 设置页，不要写 config.servers，也不要把 ACP 的 type:http 写进 Cordis。
 
-## 第三步：把这段完整发给 Harness，只配置一次
-
-```text
-我要通过 Microsoft Playwright MCP 控制现有 Edge 登录会话。
-Server 已由我在沙箱外启动，地址 http://127.0.0.1:8931/mcp，模式 --extension --browser=msedge。
-
-请先做配置和工具发现，不要开始操作业务页面：
-1. 核实当前 DSH 版本和实际活动 profile，读取其已有配置，找出 @deepseek-ai/dsh-mcp-manager 的实际条目 ID。官方 Web/Desktop 默认 ID 是 mcp-manager，不要照抄示例的 mcp，也不要假设存在通用 mcpServers.json。
-2. 已有 Manager 时，保留已有服务器，在 config.servers 中合并 playwright 条目：transport=streamable-http，url=http://127.0.0.1:8931/mcp，enabled=true。优先使用本机确实存在的设置接口；没有 MCP 表单就处理实际 profile 的 cordis.patch.yml。
-3. 修改前备份，只改必要字段，不覆盖完整配置。没有 Manager 但已有官方 dsh-mcp-client 时，按官方 insert patch 接入；不要 npm/npx 安装，不要重复注册同名服务。
-4. 如果 workspace-write 禁止写活动配置，不扩大权限，也不要反复重试。只输出我应修改的准确文件路径、必要片段和手动步骤。
-5. 配置生效后核实真实工具列表里有 mcp__playwright__browser_tabs、mcp__playwright__browser_snapshot、mcp__playwright__browser_click。仅端口可连不算完成。需要重启 DSH 或新建会话时明确告诉我。
-6. 若工具不可见，报告实际连接错误与缺失环节；不要假装已注册，不要改用 requests、Python 抓取或在沙箱中启动 Chromium。
-```
-
-**手动填写时只需这四项：**
-
-| 字段 | 值 |
-|---|---|
-| 服务名 / servers 的键 | `playwright` |
-| 传输 | `streamable-http` |
-| URL | `http://127.0.0.1:8931/mcp` |
-| 启用 | `true` |
-
-Header、Token、command、args 在本次 HTTP 注册中不填。不同 DSH 版本的界面可能不同；别为了找菜单而新装 Client。
-
-若必须手动编辑：下面是**当前官方默认 Manager ID** 的 patch 结构，需合入实际活动 profile；如果 ID 不同，改成查到的值。如果已有其他 servers，必须保留原有全部条目。不要把这段覆盖整个文件。
+用户现场已确认 Desktop 活动 profile 由 DSH_PROFILE_DIR 指向 `%USERPROFILE%\.dsh\profiles\desktop`。其他部署先核实该环境变量，不猜路径。备份实际 cordis.patch.yml，保留原条目，合入本包 dsh-client.example.yml：
 
 ```yaml
-- id: mcp-manager
-  config:
-    servers:
-      playwright:
+- insert:
+    - id: mcp-playwright
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: playwright
         transport: streamable-http
         url: http://127.0.0.1:8931/mcp
-        enabled: true
 ```
 
-CLI profile 的 patch 通常在 `$DSH_HOME/profiles/<name>/cordis.patch.yml`；Desktop 可使用应用自有 profile 目录，以本机实际值为准。配置重载后仍没工具，就正常重启 DSH 并新建会话；Server 窗口继续保持打开。
+不要重复追加同一条目。默认未设置 failOnStartupError，不声称它已经开启。Token 在 Server 环境中注入，不填 DSH HTTP headers。Server 继续运行，重启 DSH 并新建会话；先核实原生 mcp__playwright__browser_tabs / browser_snapshot 真正出现，再连续读取同一tab验证复用。
 
+ACP 的 mcpServers 是 session/new/resume 的请求参数，不需要寻找一个假想的 mcpServers 配置文件。原生工具不可用时看实际加载错误，不回到每命令新建Python客户端。
 
 ## 已注册后，直接把这段给模型
 
@@ -116,4 +93,4 @@ Edge 扩展 Token 已在本机配置，别读取、回显、上传 Token，也�
 
 用户已报告旧前台方案在目标电脑能列标签页和读快照；本次新后台/Token 方式在目标电脑上尚未实测。CI 用非真实占位 Token 检查后台启动、重复启动、MCP 工具发现和停止，不把它冒充真实 Edge 授权成功。
 
-官方依据：[Microsoft Extension Token 和 background 说明](https://github.com/microsoft/playwright/blob/main/packages/extension/README.md)，[DSH MCP Manager](https://github.com/deepseek-ai/deepseek-harness/tree/master/packages/mcp/mcp-manager)。
+官方依据：[Microsoft Extension Token 和 background 说明](https://github.com/microsoft/playwright/blob/main/packages/extension/README.md)，[DSH rc.1 MCP Client](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.2-rc.1/packages/mcp/mcp-client/README.md)。

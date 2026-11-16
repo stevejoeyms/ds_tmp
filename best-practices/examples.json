@@ -1,0 +1,157 @@
+{
+  "notice": "Schema examples only. Replace observed target/index/text; do not auto-replay. Codes and approved-only actions require the user-approved scope.",
+  "examples": [
+    {
+      "id": "tabs-list",
+      "tool": "browser_tabs",
+      "arguments": {
+        "action": "list"
+      }
+    },
+    {
+      "id": "tabs-select",
+      "tool": "browser_tabs",
+      "arguments": {
+        "action": "select",
+        "index": 0
+      }
+    },
+    {
+      "id": "snapshot",
+      "tool": "browser_snapshot",
+      "arguments": {}
+    },
+    {
+      "id": "snapshot-region",
+      "tool": "browser_snapshot",
+      "arguments": {
+        "target": "e12"
+      }
+    },
+    {
+      "id": "find",
+      "tool": "browser_find",
+      "arguments": {
+        "text": "搜索",
+        "maxResults": 5
+      }
+    },
+    {
+      "id": "type",
+      "tool": "browser_type",
+      "arguments": {
+        "target": "e12",
+        "text": "示例查询值",
+        "submit": false
+      }
+    },
+    {
+      "id": "click",
+      "tool": "browser_click",
+      "arguments": {
+        "target": "e18",
+        "element": "搜索按钮"
+      }
+    },
+    {
+      "id": "fill-form",
+      "tool": "browser_fill_form",
+      "arguments": {
+        "fields": [
+          {
+            "target": "e12",
+            "name": "编号",
+            "type": "textbox",
+            "value": "示例值"
+          },
+          {
+            "target": "e13",
+            "name": "复选框",
+            "type": "checkbox",
+            "value": "true"
+          }
+        ]
+      }
+    },
+    {
+      "id": "select-native",
+      "tool": "browser_select_option",
+      "arguments": {
+        "target": "e20",
+        "values": [
+          "observed-option-value"
+        ]
+      }
+    },
+    {
+      "id": "wait-text",
+      "tool": "browser_wait_for",
+      "arguments": {
+        "text": "已观察到的完成文案",
+        "time": 10
+      }
+    },
+    {
+      "id": "wait-gone",
+      "tool": "browser_wait_for",
+      "arguments": {
+        "textGone": "加载中",
+        "time": 10
+      }
+    },
+    {
+      "id": "screenshot",
+      "tool": "browser_take_screenshot",
+      "arguments": {
+        "scale": "css",
+        "filename": "evidence/case-01.png",
+        "fullPage": false
+      }
+    },
+    {
+      "id": "console",
+      "tool": "browser_console_messages",
+      "arguments": {
+        "level": "error",
+        "all": false
+      }
+    },
+    {
+      "id": "network-list",
+      "tool": "browser_network_requests",
+      "arguments": {
+        "static": false,
+        "all": false
+      }
+    },
+    {
+      "id": "network-body-approved-only",
+      "tool": "browser_network_request",
+      "arguments": {
+        "index": 1,
+        "part": "response-body"
+      }
+    },
+    {
+      "id": "iframe-metadata-approved-only",
+      "tool": "browser_evaluate",
+      "arguments": {
+        "function": "() => Array.from(document.querySelectorAll('iframe')).map(f => ({name:f.name,src:f.getAttribute('src')}))"
+      }
+    },
+    {
+      "id": "frame-list-approved-only",
+      "tool": "browser_run_code_unsafe",
+      "arguments": {
+        "code": "async (page) => page.frames().map(f => ({name:f.name(),url:f.url()}))"
+      }
+    },
+    {
+      "id": "dismiss-approved-only",
+      "tool": "browser_handle_dialog",
+      "arguments": {
+        "accept": false
+      }
+    }
+  ]
+}

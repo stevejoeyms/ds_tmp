@@ -1,5 +1,8 @@
 # 浏览器自动化便携资源
 
+- [当前版本最佳实践 MVP](best-practices/README.md)
+- [直接给 Harness 的短指令](best-practices/MODEL-INSTRUCTIONS.md)
+
 - [Windows Playwright MCP 离线包：下载 Releases](https://github.com/stevejoeyms/ds_tmp/releases)
 - [Windows 安装、启动和 DSH 注册说明](offline-mcp/README.md)
 - [Playwright Extension 0.5.0 ZIP](playwright-extension-0.5.0.zip)（从本机已安装扩展导出）
