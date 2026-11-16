@@ -28,10 +28,15 @@ original = files.copy()
 for p in sorted((r / 'best-practices').iterdir()):
     if p.is_file():
         files['best-practices/' + p.name] = p.read_bytes()
+for p in sorted((r / 'bundle-docs').iterdir()):
+    if p.is_file():
+        files[p.name] = p.read_bytes()
 guide = (r / 'Playwright-MCP-快速开始.md').read_bytes()
 files['Harness配置说明.md'] = guide
 files['server/README.md'] = (r / 'offline-mcp/README.md').read_bytes()
 intro = '''# Edge + DSH 统一包：最佳实践 MVP
+
+**首次或模型找不到时：先读根目录 00-先读我-Playwright入口.md。**
 
 已经接通的电脑：只需读取 best-practices，不必重启、重装或再次注册。
 
