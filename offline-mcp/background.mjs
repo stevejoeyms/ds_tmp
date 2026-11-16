@@ -96,23 +96,26 @@ async function serve() {
         if (child?.exitCode === null) {
           child.once('exit', () => socket.end(JSON.stringify({ stopped: true })));
           child.kill();
-        } else socket.end(JSON.stringify({ stopped: true }));
+        } else { socket.end(JSON.stringify({ stopped: true })); clean(); }
       } catch { socket.end(JSON.stringify({ error: 'Invalid control request.' })); }
     });
   });
   server.on('error', () => process.exit(1));
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(pipe, resolve); });
-  fs.writeFileSync(statePath, JSON.stringify({ nonce, pid: process.pid, root }), { mode: 0o600 });
   const clean = () => {
     if (state()?.nonce === nonce) { try { fs.unlinkSync(statePath); } catch {} }
     server.close();
   };
-  const log = fs.openSync(path.join(home, `server-${key}.log`), 'a');
-  child = spawn(process.execPath, [path.join(root, 'node_modules', '@playwright', 'mcp', 'cli.js'),
+  let log;
+  try {
+    fs.writeFileSync(statePath, JSON.stringify({ nonce, pid: process.pid, root }), { mode: 0o600 });
+    log = fs.openSync(path.join(home, `server-${key}.log`), 'a');
+    child = spawn(process.execPath, [path.join(root, 'node_modules', '@playwright', 'mcp', 'cli.js'),
     '--extension', '--browser=msedge', '--background', '--port=8931', '--host=127.0.0.1'],
     { cwd: root, windowsHide: true, stdio: ['ignore', log, log],
       env: { ...process.env, DEBUG: '', PWDEBUG: '' } });
-  fs.closeSync(log);
+  } catch (error) { clean(); throw error; }
+  finally { if (log !== undefined) fs.closeSync(log); }
   child.once('error', () => { clean(); process.exitCode = 1; });
   child.once('exit', code => { clean(); if (!stopping && code) process.exitCode = 1; });
   process.once('SIGTERM', () => { stopping = true; child.kill(); });
@@ -133,7 +136,7 @@ async function main() {
   const startup = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup', `PlaywrightMCP-${key}.cmd`);
   if (action === 'enable-autostart') {
     if (!process.env.APPDATA || !fs.existsSync(path.dirname(startup))) throw new Error('User Startup folder unavailable.');
-    fs.writeFileSync(startup, `@echo off\r\nchcp 65001 >nul\r\ncall "${path.join(root, 'mcp.cmd')}" start\r\n`);
+    fs.writeFileSync(startup, `@echo off\r\nchcp 65001 >nul\r\n"${process.execPath}" "${fileURLToPath(import.meta.url)}" start\r\n`);
     console.log('User login autostart enabled for this package. No admin or policy changes.'); return;
   }
   if (action === 'disable-autostart') {
