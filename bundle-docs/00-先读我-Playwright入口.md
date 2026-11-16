@@ -1,5 +1,7 @@
 # Playwright 在这里：给用户和 Harness 的入口
 
+日常用户入口：双击本包 **启动Harness.cmd**，先就绪后台MCP，再打开相邻 `DeepSeek Harness New\DeepSeek Harness.exe`。不装登录自启动。首次说明见 [一键启动说明.md](一键启动说明.md)。初始化会把本机Python/Playwright路径提示合并到DSH home的AGENTS.md；是否已加载仍需真实会话验证。离线Python使用 `tools.cmd python`，不要猜系统PATH里的python。
+
 ## 这是什么
 
 这是 **Microsoft Playwright MCP 的 Edge 离线运行包**。它让 Harness 通过原生工具读取网页可访问性快照、点击控件、填写输入、切换标签页和验证页面结果，复用用户已登录的 Edge 会话。

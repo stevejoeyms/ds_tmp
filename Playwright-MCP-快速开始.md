@@ -24,23 +24,13 @@ server\mcp.cmd start
 
 显示 `Background MCP ready` 后可以关掉终端窗口。Server 已脱离启动终端，继续在后台运行。Node 使用 DSH 已有的 dsh-primary-runtime 路径，不要求 PATH、npm、独立 Node 或 PowerShell 脚本权限。若 DSH 运行时在其他位置，先 `set "DSH_NODE_EXE=C:\实际路径\node.exe"`。
 
-## 后续完全省去手动启动（可选）
+## 日常启动：一个脚本先MCP后Harness
 
-确认后台已正常运行后，在同一个沙箱外 CMD 执行一次：
+在统一包根目录双击 **启动Harness.cmd**。脚本先探测/复用MCP；未运行时后台启动，协议初始化与工具发现成功后，打开相邻的 `DeepSeek Harness New\DeepSeek Harness.exe`。不设置登录自启动，不强关已有Harness；已运行的旧进程若未加载新配置，应正常完全退出后再运行脚本。
 
-```bat
-server\mcp.cmd enable-autostart
-```
+首次缺Token时引导用本机记事本填写；后续无需重复粘贴。修复Token用 `重新配置Token.cmd`。统一入口优先使用本地Token文件，避免旧环境值覆盖；直接调用旧 `server\mcp.cmd` 时仍为环境变量优先。协议就绪只能确认Server，无法证明扩展Token有效或已完成SSO。
 
-它只在**当前用户的 Startup 文件夹**写一个本包的启动项，不创建管理员服务，不修改执行策略。以后 Windows 用户登录时自动拉起后台 Server；启动项的 CMD 可能短暂闪过，但不保留终端窗口。请勿移动或删除离线包目录。公司若禁止用户启动项，不绕过，由 IT 提供批准的启动方式。
-
-取消本包的登录自启动：
-
-```bat
-server\mcp.cmd disable-autostart
-```
-
-自启动在用户登录后发生，不能代替公司 SSO 登录，也不是开机前的 Windows 系统服务。Token 不能把沙箱内进程变成沙箱外进程。首次启动/自启动设置必须在普通用户宿主环境完成；以后 Harness 通过已注册的 loopback HTTP 使用后台服务。不要再从沙箱内 spawn Edge，也不要升级 danger-full-access。
+完整目录摆放、Python和DSH说明见根目录 **一键启动说明.md**。Server必须由用户在沙箱外启动，Token不会改变权限边界，不修改策略。
 
 ## 状态与停止
 

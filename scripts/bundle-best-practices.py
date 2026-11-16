@@ -31,14 +31,25 @@ for p in sorted((r / 'best-practices').iterdir()):
 for p in sorted((r / 'bundle-docs').iterdir()):
     if p.is_file():
         files[p.name] = p.read_bytes()
+for name in ['setup.mjs', 'setup-core.mjs', 'tools.cmd', '开始使用.cmd', '启动Harness.cmd', '重新配置Token.cmd']:
+    data = (r / 'bootstrap' / name).read_bytes()
+    if name.endswith('.cmd'):
+        data = data.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
+    files[name] = data
+files['一键启动说明.md'] = (r / 'bootstrap' / 'USER-GUIDE.md').read_bytes()
+# This distribution deliberately offers no login-autostart shortcut.
+for name in ['enable-autostart.cmd', 'disable-autostart.cmd']:
+    files.pop(name, None)
 guide = (r / 'Playwright-MCP-快速开始.md').read_bytes()
 files['Harness配置说明.md'] = guide
 files['server/README.md'] = (r / 'offline-mcp/README.md').read_bytes()
 intro = '''# Edge + DSH 统一包：最佳实践 MVP
 
-**首次或模型找不到时：先读根目录 00-先读我-Playwright入口.md。**
+**首次和日常都运行根目录 启动Harness.cmd：先保证MCP就绪，再请求打开Harness。详见一键启动说明.md。**
 
-已经接通的电脑：只需读取 best-practices，不必重启、重装或再次注册。
+模型找不到时：读 00-先读我-Playwright入口.md。
+
+已有环境会被探测和复用，注册与模型索引为幂等合并。Python和Harness软件需放在相邻harness目录，见一键启动说明.md。不修改系统PATH、注册表或执行策略，不安装登录自启动。
 
 给 Harness 一句话：
 > 先读本包 best-practices/MODEL-INSTRUCTIONS.md，按当前真实工具schema执行；不会的动作查TOOL-RECIPES.md，不凭旧记忆猜参数。目标、环境、授权与预期由我提供。
@@ -51,10 +62,10 @@ intro = '''# Edge + DSH 统一包：最佳实践 MVP
 - best-practices/SOURCES.md：固定版本官方依据和实际验证范围。
 
 新电脑部署：先看下面说明，再按Harness配置说明.md接入DSH0.2.2-rc.1官方Client。
-快捷入口：configure-token.cmd、start-background.cmd、status.cmd、stop-background.cmd；可选enable-autostart.cmd。
+统一入口：tools.cmd python / doctor / mcp status；首次缺Token由启动脚本引导本地填写，连接问题可运行重新配置Token.cmd。
 扩展放在extension/，Server及完整依赖放在server/。不需npm或独立Node。
 
-本次仅增加最佳实践并更正rc.1注册说明，保留上一版全部运行代码和依赖。
+新增便携初始化/启动入口，保留上一版server核心、扩展与全部依赖；不包含Python发行版或wheel仓库。
 
 ---
 
@@ -63,13 +74,14 @@ files['README.md'] = intro.encode() + guide
 source = json.loads(files['SOURCE.json'])
 source['practices_source_commit'] = a.source_commit
 source['base_unified_zip_sha256'] = base_hash
+source['bootstrap'] = {'source_commit': a.source_commit, 'runtime': 'existing DSH Node24 + adjacent user Python3.12 x64', 'login_autostart': False}
 source['practices_validation'] = '25 actual tools, 18 positive schema examples, 7 rejected negative cases, 3 JS syntax checks; no browser calls.'
 files['SOURCE.json'] = (json.dumps(source, ensure_ascii=False, indent=2) + '\n').encode()
 files['SHA256SUMS'] = ''.join(hashlib.sha256(v).hexdigest() + '  ' + k + '\n'
                                 for k, v in sorted(files.items()) if k != 'SHA256SUMS').encode()
 # All code, dependencies and extension files must remain byte-for-byte unchanged.
 changed = {k for k, v in original.items() if files.get(k) != v}
-allowed = {'README.md', 'Harness配置说明.md', 'server/README.md', 'SOURCE.json', 'SHA256SUMS'}
+allowed = {'README.md', 'Harness配置说明.md', 'server/README.md', 'SOURCE.json', 'SHA256SUMS', 'enable-autostart.cmd', 'disable-autostart.cmd'}
 if changed - allowed:
     raise SystemExit('Unexpected runtime mutation: ' + repr(changed - allowed))
 a.output_dir.mkdir(parents=True, exist_ok=True)

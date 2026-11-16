@@ -28,6 +28,11 @@ try {
         Remove-Item Env:PLAYWRIGHT_MCP_EXTENSION_TOKEN -ErrorAction SilentlyContinue
         Remove-Item Env:DSH_NODE_EXE -ErrorAction SilentlyContinue
     }
+    $repoRoot = Split-Path $PSScriptRoot -Parent
+    & node --test (Join-Path $repoRoot 'bootstrap/setup.test.mjs')
+    if ($LASTEXITCODE -ne 0) { throw 'Portable bootstrap tests failed' }
+    & (Join-Path $repoRoot 'bootstrap/windows-check.ps1')
+    if ($LASTEXITCODE -ne 0) { throw 'Windows portable setup check failed' }
     $dist = Join-Path (Split-Path $PSScriptRoot -Parent) 'dist'
     if (Test-Path -LiteralPath $dist) { throw 'dist already exists. Move it aside before rebuilding.' }
     $stage = Join-Path $dist 'playwright-mcp-offline-win-x64'

@@ -1,2 +1,7 @@
 offline-mcp/node_modules/
 dist/
+
+.local/
+ENVIRONMENT.md
+*.bak-*
+*.tmp-*
