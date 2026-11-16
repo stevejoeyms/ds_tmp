@@ -23,3 +23,5 @@ Token可用形态与浏览器认证是两件事；启动器不宣称能从tools/
 用户提供的目标机实测：保留background，仅将MCP子进程环境 `PLAYWRIGHT_MCP_PING_TIMEOUT_MS=0` 后，原生连接在20秒、65秒仍有效，并完成公开页面搜索。此为用户现场报告，本发布者未独立接入目标机复测；不扩展为企业业务测试通过。设置0后心跳没有运行，不能称“通过20多个心跳周期”。
 
 源码核验：锁定依赖playwright-core的coreBundle.js中pingTimeout直接读取process.env该变量，非CLI配置合并链；timeout<=0跳过心跳，否则ping失败会server.close。此修复是当前DSH组合的局部兼容策略，不修改官方依赖，不宣称修复了所有404原因。
+
+本次[Windows CI](https://github.com/stevejoeyms/ds_tmp/actions/runs/43852327389)（代码0989560）PASS：21/21原生测试、实际CLI/HTTP协议、后台启动复用与停止、Python入口、模拟Harness顺序验证。新增预加载探针只用于CI，直接观察官方CLI子进程收到心跳值0，即使父进程值为12345；父进程保持12345。探针不进入离线包。首次CI因测试预加载路径转义失败，修正测试路径后全绿；运行修复本身未改变。

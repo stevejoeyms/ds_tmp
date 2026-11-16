@@ -70,3 +70,9 @@
 - [Desktop profile初始化](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.2-rc.1/apps/desktop/src/project-manager.ts)：生成profile manifest，不把cordis.yml注释当作加载证据。
 
 启动器的Windows验证使用Runner临时profile与无害模拟Harness程序；不代表真实DSH上下文加载、Edge扩展Token或SSO已经在新机器验收。
+
+## DSH心跳兼容与后台交互
+
+本次只修改自有启动器的子进程环境。准确依据为锁定依赖playwright-core 1.66.0-alpha-2026-11-09的lib/coreBundle.js：pingTimeout直接读取PLAYWRIGHT_MCP_PING_TIMEOUT_MS，<=0不启动心跳，ping失败会关闭Server会话。此变量不经过浏览器配置的CLI/env合并链。目标机65秒稳定性为用户提供的实测，不冒充发布者独立实测。
+
+[官方actionability定义](https://playwright.dev/docs/actionability)区分元素可见性与文档前后台状态；后台hidden不能单独证明fill失败，更不能把JS赋值当通用UI测试替代方案。

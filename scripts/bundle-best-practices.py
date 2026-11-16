@@ -75,6 +75,7 @@ files['README.md'] = intro.encode() + guide
 source = json.loads(files['SOURCE.json'])
 source['practices_source_commit'] = a.source_commit
 source['base_unified_zip_sha256'] = base_hash
+source['dsh_compatibility'] = {'mcp_child_env': {'PLAYWRIGHT_MCP_PING_TIMEOUT_MS': '0'}, 'background': True, 'user_environment_modified': False, 'windows_validation': 'https://github.com/stevejoeyms/ds_tmp/actions/runs/43852327389'}
 source['bootstrap'] = {'source_commit': a.source_commit, 'runtime': 'existing DSH Node24 + adjacent user Python3.12 x64', 'login_autostart': False}
 source['practices_validation'] = '25 actual tools, 18 positive schema examples, 7 rejected negative cases, 3 JS syntax checks; no browser calls.'
 files['SOURCE.json'] = (json.dumps(source, ensure_ascii=False, indent=2) + '\n').encode()

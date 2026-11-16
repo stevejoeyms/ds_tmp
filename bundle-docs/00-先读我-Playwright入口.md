@@ -1,5 +1,7 @@
 # Playwright 在这里：给用户和 Harness 的入口
 
+本版已在启动器局部固化DSH心跳兼容设置，无须手动设置环境变量。升级先退出DSH并在旧包停止MCP，再启动新版，详见一键启动说明。
+
 日常用户入口：双击本包 **启动Harness.cmd**，先就绪后台MCP，再打开相邻 `DeepSeek Harness New\DeepSeek Harness.exe`。不装登录自启动。首次说明见 [一键启动说明.md](一键启动说明.md)。初始化会把本机Python/Playwright路径提示合并到DSH home的AGENTS.md；是否已加载仍需真实会话验证。离线Python使用 `tools.cmd python`，不要猜系统PATH里的python。
 
 ## 这是什么
