@@ -23,7 +23,7 @@ Set-Location 'C:\path\to\playwright-mcp-offline-win-x64'
 
 ## 2. Chrome 装官方扩展，启动服务
 
-优先安装 [Microsoft 官方 Playwright Extension](https://chromewebstore.google.com/detail/mmlmfjhmonkocbjadbfplnigmagldckm)。商店不可访问时，可用本仓库先前导出的 [扩展 0.5.0 ZIP](../playwright-extension-0.5.0.zip)：解压，打开 `chrome://extensions/`，开启开发者模式，加载已解压文件夹。若企业策略禁止安装，交由 IT 批准，不改策略。
+优先安装 [Microsoft 官方 Playwright Extension](https://chromewebstore.google.com/detail/mmlmfjhmonkocbjadbfplnigmagldckm)。商店不可访问时，可用本仓库先前导出的 [扩展 0.5.0 ZIP](https://raw.githubusercontent.com/stevejoeyms/ds_tmp/main/playwright-extension-0.5.0.zip)：解压，打开 `chrome://extensions/`，开启开发者模式，加载已解压文件夹。若企业策略禁止安装，交由 IT 批准，不改策略。
 
 保持 Chrome 正常运行，用户自行登录目标页面。在 **DSH 沙箱外的普通 PowerShell** 中运行：
 
