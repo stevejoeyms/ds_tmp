@@ -1,4 +1,4 @@
-"""Build a docs-only update over the verified Windows unified runtime; builder-side only."""
+"""Bundle portable launchers and docs over the verified Windows unified runtime; builder-side only."""
 from pathlib import Path, PurePosixPath
 import argparse, hashlib, json, zipfile
 
@@ -79,7 +79,7 @@ source['practices_validation'] = '25 actual tools, 18 positive schema examples, 
 files['SOURCE.json'] = (json.dumps(source, ensure_ascii=False, indent=2) + '\n').encode()
 files['SHA256SUMS'] = ''.join(hashlib.sha256(v).hexdigest() + '  ' + k + '\n'
                                 for k, v in sorted(files.items()) if k != 'SHA256SUMS').encode()
-# All code, dependencies and extension files must remain byte-for-byte unchanged.
+# All pre-existing runtime code, dependencies and extension files remain byte-for-byte unchanged.
 changed = {k for k, v in original.items() if files.get(k) != v}
 allowed = {'README.md', 'Harness配置说明.md', 'server/README.md', 'SOURCE.json', 'SHA256SUMS', 'enable-autostart.cmd', 'disable-autostart.cmd'}
 if changed - allowed:
